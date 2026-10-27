@@ -1,0 +1,16 @@
+{
+  "name": "agenda-porto-velho",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "check": "node --check server.js && node --check public/app.js",
+    "cadastros": "node manage.js list",
+    "aprovar": "node manage.js approve",
+    "remover": "node manage.js delete"
+  }
+}
