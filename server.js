@@ -141,3 +141,5 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const app = createApp();
   app.listen(Number(process.env.PORT || 3000), process.env.HOST || '0.0.0.0', () => console.log('Agenda Porto Velho iniciada na porta', app.address().port));
 }
+
+export default createApp;
