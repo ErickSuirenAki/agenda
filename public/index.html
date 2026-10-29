@@ -7,6 +7,78 @@
 <section class="hero"><div class="hero-copy"><div class="location"><span class="dot"></span> FEITO PARA PORTO VELHO · RO</div><h1>Quem resolve<br>está <em>por perto.</em></h1><p>O contato certo para o que você precisa.<br>Encontre profissionais da sua cidade, sem complicação.</p><form id="search" class="search"><label><span>O que você precisa?</span><input id="query" name="q" placeholder="Pedreiro, eletricista, construção…" maxlength="100"></label><label class="neighborhood"><span>Em qual bairro?</span><input id="neighborhood" name="neighborhood" placeholder="Todos os bairros" maxlength="80" list="bairros"></label><button class="button" type="submit">Buscar <span>→</span></button></form><div class="hero-note"><span>✓ Contato direto</span><span>✓ Sem cadastro para buscar</span></div></div><div class="hero-art" aria-hidden="true"><div class="art-lines"></div><div class="address-book"><div class="book-top">PORTO VELHO, RONDÔNIA <span>→</span></div><div class="book-title">Gente boa.<br>Serviço bem<br><i>feito.</i></div><div class="book-bottom">SUA AGENDA DE SERVIÇOS <b>a.</b></div></div><div class="art-tag">Da nossa cidade.<br>Para o seu dia a dia.</div></div></section>
 <section class="directory" id="profissionais"><div class="section-heading"><div><span class="eyebrow">ENCONTRE QUEM FAZ</span><h2>Do pequeno reparo à grande ideia.</h2></div><span class="local-label">Porto Velho · RO</span></div><div class="categories" id="categories" aria-label="Filtrar por serviço"></div><div class="results-heading"><h3 id="results-title">Profissionais da nossa cidade</h3><span id="count" role="status" aria-live="polite">Carregando…</span></div><p class="search-context" id="search-context" hidden></p><div id="results" class="results" aria-live="polite"></div><button class="text-button" id="clear" hidden>Limpar filtros e ver todos os serviços →</button></section>
 <section class="how" id="como-funciona"><div><span class="eyebrow">SIMPLES COMO DEVE SER</span><h2>Menos procura.<br>Mais problema resolvido.</h2></div><div class="steps"><article><span>01</span><h3>Encontre o serviço</h3><p>Busque pelo que precisa e filtre pelo bairro em Porto Velho.</p></article><article><span>02</span><h3>Conheça o profissional</h3><p>Veja a descrição do serviço e a região de atendimento.</p></article><article><span>03</span><h3>Converse diretamente</h3><p>Ligue ou abra o WhatsApp. Combine valores e horários com o profissional.</p></article></div></section>
-<section class="signup" id="cadastro"><div class="signup-copy"><span class="eyebrow">SEU TALENTO MERECE SER ENCONTRADO</span><h2>Você faz.<br> A cidade<br> <em>fica sabendo.</em></h2><p>Cadastre seu serviço gratuitamente e ajude quem está perto a encontrar você.</p><div class="signup-note">Os cadastros passam por revisão antes de aparecer na busca. Divulgamos somente os contatos autorizados.</div></div><form id="signup" class="signup-form"><h3>Faça parte da Agenda PVH</h3><p>Seu próximo cliente pode estar no bairro ao lado.</p><label>Nome profissional ou da empresa<input name="name" required minlength="3" maxlength="80" autocomplete="name" placeholder="Como você quer ser encontrado?"></label><div class="form-row"><label>Serviço<select name="category" id="signup-category" required><option value="">Selecione</option></select></label><label>Bairro<input name="neighborhood" required minlength="2" maxlength="80" list="bairros" placeholder="Ex.: Aponiã"></label></div><label>Telefone com DDD<input name="phone" type="tel" autocomplete="tel" required pattern="[+0-9 ()-]{10,20}" placeholder="(69) 99999-9999" maxlength="20"></label><label class="check"><input name="whatsapp" type="checkbox" checked> Esse número também tem WhatsApp</label><label>Conte um pouco sobre seu trabalho<textarea name="description" required minlength="10" maxlength="500" rows="3" placeholder="Quais serviços você faz? Quais regiões atende?"></textarea></label><div class="trap" aria-hidden="true"><label>Seu site<input name="website" tabindex="-1" autocomplete="off"></label></div><label class="check consent"><input name="consent" type="checkbox" required> Autorizo a publicação do meu nome, telefone, bairro e descrição para divulgar meus serviços. Posso solicitar a remoção ao responsável pela agenda.</label><button class="button" type="submit">Enviar meu cadastro <span>→</span></button><p id="form-message" role="status" aria-live="polite"></p></form></section>
-</main><footer><a class="brand" href="/">agenda<span class="brand-city">PVH</span></a><p>Conectando quem precisa com quem sabe fazer.</p><span>Porto Velho, Rondônia · Brasil</span><p class="footer-note">A Agenda PVH divulga contatos. Não intermedeia pagamentos nem garante os serviços. Combine os detalhes diretamente com o profissional.</p></footer><datalist id="bairros"><option value="Aponiã"><option value="Areal"><option value="Centro"><option value="Cohab"><option value="Embratel"><option value="Flodoaldo Pontes Pinto"><option value="Igarapé"><option value="JK"><option value="Nova Porto Velho"><option value="Olaria"><option value="São Cristóvão"><option value="Tancredo Neves"><option value="Três Marias"></datalist>
+<section class="signup" id="cadastro"><div class="signup-copy"><span class="eyebrow">SEU TALENTO MERECE SER ENCONTRADO</span><h2>Você faz.<br> A cidade<br> <em>fica sabendo.</em></h2><p>Cadastre seu serviço gratuitamente e ajude quem está perto a encontrar você.</p><div class="signup-note">Os cadastros passam por revisão antes de aparecer na busca. Divulgamos somente os contatos autorizados.</div></div><form id="signup" class="signup-form"><h3>Faça parte da Agenda PVH</h3><p>Seu próximo cliente pode estar no bairro ao lado.</p><label>Nome profissional ou da empresa<input name="name" required minlength="3" maxlength="80" autocomplete="name" placeholder="Como você quer ser encontrado?"></label><div class="form-row"><label>Serviço<select name="category" id="signup-category" required><option value="">Selecione</option></select></label><label>Bairro<input name="neighborhood" required minlength="2" maxlength="80" list="bairros" placeholder="Ex.: Aponiã"></label></div><label id="custom-category-label" hidden>Qual é a sua profissão?<input id="custom-category" name="customCategory" minlength="3" maxlength="80" placeholder="Ex.: Restaurador de móveis" disabled></label><label>Telefone com DDD<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="\(69\) [2-9][0-9]{3,4}-[0-9]{4}" placeholder="(69) 99999-9999" maxlength="20"></label><label class="check"><input name="whatsapp" type="checkbox" checked> Esse número também tem WhatsApp</label><label>Conte um pouco sobre seu trabalho<textarea name="description" required minlength="10" maxlength="500" rows="3" placeholder="Quais serviços você faz? Quais regiões atende?"></textarea></label><div class="trap" aria-hidden="true"><label>Seu site<input name="website" tabindex="-1" autocomplete="off"></label></div><label class="check consent"><input name="consent" type="checkbox" required> Autorizo a publicação do meu nome, telefone, bairro e descrição para divulgar meus serviços. Posso solicitar a remoção ao responsável pela agenda.</label><button class="button" type="submit">Enviar meu cadastro <span>→</span></button><p id="form-message" role="status" aria-live="polite"></p></form></section>
+</main><footer><a class="brand" href="/">agenda<span class="brand-city">PVH</span></a><p>Conectando quem precisa com quem sabe fazer.</p><span>Porto Velho, Rondônia · Brasil</span><a class="button small outline" href="/admin">Administração →</a><p class="footer-note">A Agenda PVH divulga contatos. Não intermedeia pagamentos nem garante os serviços. Combine os detalhes diretamente com o profissional.</p></footer><datalist id="bairros">
+<option value="Aeroclube"></option>
+<option value="Agenor de Carvalho"></option>
+<option value="Aponiã"></option>
+<option value="Área Militar e Aeroporto"></option>
+<option value="Areal"></option>
+<option value="Areia Branca"></option>
+<option value="Arigolândia"></option>
+<option value="Bairro Novo"></option>
+<option value="Baixa da União"></option>
+<option value="Caiari"></option>
+<option value="Caladinho"></option>
+<option value="Cascalheira"></option>
+<option value="Castanheira"></option>
+<option value="Centro"></option>
+<option value="Cidade do Lobo"></option>
+<option value="Cidade Jardim"></option>
+<option value="Cidade Nova"></option>
+<option value="Cohab"></option>
+<option value="Conceição"></option>
+<option value="Costa e Silva"></option>
+<option value="Cuniã"></option>
+<option value="Eldorado"></option>
+<option value="Eletronorte"></option>
+<option value="Embratel"></option>
+<option value="Escola de Polícia"></option>
+<option value="Esperança da Comunidade"></option>
+<option value="Flodoaldo Pontes Pinto"></option>
+<option value="Floresta"></option>
+<option value="Igarapé"></option>
+<option value="Industrial"></option>
+<option value="Jardim Santana"></option>
+<option value="Juscelino Kubitscheck"></option>
+<option value="KM-1"></option>
+<option value="Lagoa"></option>
+<option value="Lagoinha"></option>
+<option value="Liberdade"></option>
+<option value="Marcos Freire"></option>
+<option value="Mariana"></option>
+<option value="Maringá"></option>
+<option value="Mato Grosso"></option>
+<option value="Militar"></option>
+<option value="Mocambo"></option>
+<option value="Nacional"></option>
+<option value="Nossa Senhora das Graças"></option>
+<option value="Nova Esperança"></option>
+<option value="Nova Floresta"></option>
+<option value="Nova Porto Velho"></option>
+<option value="Novo Horizonte"></option>
+<option value="Olaria"></option>
+<option value="Panair"></option>
+<option value="Pantanal"></option>
+<option value="Pedrinhas"></option>
+<option value="Planalto"></option>
+<option value="Rio Madeira"></option>
+<option value="Rosalina de Carvalho"></option>
+<option value="Ronaldo Aragão"></option>
+<option value="Roque"></option>
+<option value="Santa Bárbara"></option>
+<option value="São Cristóvão"></option>
+<option value="São Francisco"></option>
+<option value="São João Bosco"></option>
+<option value="São Sebastião"></option>
+<option value="Socialista"></option>
+<option value="Tancredo Neves"></option>
+<option value="Teixeirão"></option>
+<option value="Tiradentes"></option>
+<option value="Três Marias"></option>
+<option value="Triângulo"></option>
+<option value="Tucumanzal"></option>
+<option value="Tupy"></option>
+<option value="Ulysses Guimarães"></option>
+</datalist>
 </body></html>

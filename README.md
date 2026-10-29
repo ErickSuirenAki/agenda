@@ -18,7 +18,17 @@ A porta padrão é 3000. `PORT` e `HOST` são opcionais. `npm run dev` reinicia 
 
 ## Cadastros e moderação
 
-A base começa vazia: não são exibidos profissionais ou telefones fictícios. Um cadastro enviado pelo site fica pendente e não aparece na API pública até aprovação. A administração é feita somente no terminal do servidor:
+A base começa vazia: não são exibidos profissionais ou telefones fictícios. Um cadastro enviado pelo site fica pendente e não aparece na API pública até aprovação. A administração pelo navegador fica em `/admin`. Configure uma senha forte ao iniciar o servidor:
+
+```sh
+ADMIN_PASSWORD='sua-senha-forte' npm start
+```
+
+Abra `http://localhost:3000/admin` (ou `/admin` no seu domínio), informe a senha e use os filtros **Pendentes**, **Publicados** e **Todos**. Cada cadastro mostra seus dados e permite aprovar ou remover, com confirmação. A aprovação publica imediatamente na busca; a remoção exclui do banco.
+
+A senha é configurada em `ADMIN_PASSWORD` no ambiente da hospedagem. Sem essa variável, a API administrativa fica desativada. Não há senha padrão. A senha digitada fica somente na memória da página; sair ou recarregar exige novo acesso. Use HTTPS em produção. Após dez falhas de autenticação por IP, o acesso fica bloqueado até completar 15 minutos da primeira falha; atrás de proxy esse limite pode ser compartilhado.
+
+Também é possível administrar pelo terminal:
 
 ```sh
 npm run cadastros
@@ -39,3 +49,11 @@ Execute como processo Node persistente, com armazenamento durável para `data/`.
 Antes de divulgar o site, configure seu domínio, o responsável pelo tratamento dos dados, um canal real para pedidos de exclusão e uma política de privacidade adequada à operação. Não há pagamentos, contas de usuários, cálculo de distância por GPS ou verificação automática de profissionais nesta versão. A proximidade é por bairro informado, sem promessa de distância exata.
 
 O banco deve ficar em volume persistente: a publicação do ambiente de desenvolvimento não substitui hospedagem pública nem garante preservação dos futuros cadastros.
+
+## Bairros
+
+As sugestões de bairro na busca e no cadastro incluem os 71 nomes do [Compêndio dos Bairros do Distrito Sede, do Geoportal da Prefeitura](https://geoportal.portovelho.ro.gov.br/compendios_bairros.html), consultado em 29/10/2026. Foi corrigida a grafia de Tancredo Neves na lista. Os campos continuam permitindo digitação livre para localidades não listadas.
+
+## Edição pelo administrador
+
+Em `/admin`, escolha **Visualização → Tabela do banco** para consultar os cadastros em linhas. Use a busca e o filtro de status para localizar registros. **Editar** permite alterar nome, profissão, bairro, telefone, descrição, WhatsApp e status; **Salvar alterações** grava no SQLite. Alterações em cadastros publicados aparecem imediatamente no site. **Remover** exclui o registro após confirmação. O ID e a data original do cadastro são preservados na edição.
