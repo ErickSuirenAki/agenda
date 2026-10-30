@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { createApp, openDatabase } from '../server.js';
+import { createApp } from '../server.js';
+import { memoryStore } from './helpers/memory-store.js';
 const valid = { name: 'Profissional de teste', category: 'Pedreiro', neighborhood: 'Aponiã', phone: '69999990000', description: 'Obras e reformas residenciais.', whatsapp: true, consent: true };
 async function setup(t, options = {}) {
-  const db = openDatabase(':memory:'); const server = createApp(db, options); server.listen(0, '127.0.0.1'); await once(server, 'listening');
-  t.after(async () => { await new Promise(resolve => server.close(resolve)); db.close(); });
+  const db = memoryStore(); const server = createApp(db, options); server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); });
   const base = `http://127.0.0.1:${server.address().port}`;
   const get = async (path = '/api/professionals') => (await fetch(base + path)).json();
   const post = body => fetch(base + '/api/professionals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -21,7 +22,7 @@ test('registration stays private until approved; normalized search and filters w
   const { db, get, post } = await setup(t);
   const res = await post(valid); assert.equal(res.status, 201); const { id } = await res.json();
   assert.equal((await get()).professionals.length, 0);
-  db.prepare("UPDATE professionals SET status='approved' WHERE id=?").run(id);
+  await db.update(id, { status: 'approved' });
   for (const path of ['?q=CONSTRUÇÃO', '?q=pedreiro&neighborhood=aponia', '?category=Pedreiro']) {
     const result = await get('/api/professionals' + path); assert.equal(result.professionals.length, 1); assert.equal(result.professionals[0].phone, valid.phone);
   }
@@ -37,7 +38,7 @@ test('phone normalization, duplicate detection and SQL injection resistance', as
   assert.equal((await post({ ...valid, phone: '+55 (69) 99999-0000' })).status, 201);
   assert.equal((await post(valid)).status, 409);
   assert.equal((await get('/api/professionals?q=%27%20OR%201%3D1--')).professionals.length, 0);
-  assert.equal(db.prepare('SELECT count(*) AS n FROM professionals').get().n, 1);
+  assert.equal((await db.list(true)).length, 1);
 });
 test('rejects cross-origin submissions and unsupported content types', async t => {
   const { base } = await setup(t);
@@ -102,7 +103,7 @@ test('custom professions require a name and remain private until approval', asyn
   assert.equal(response.status, 201);
   const { id } = await response.json();
   assert.equal((await get()).categories.includes('Restaurador de móveis'), false);
-  db.prepare("UPDATE professionals SET status='approved' WHERE id=?").run(id);
+  await db.update(id, { status: 'approved' });
   const result = await get('/api/professionals?q=restaurador');
   assert.equal(result.professionals[0].category, 'Restaurador de móveis');
   assert.ok(result.categories.includes('Restaurador de móveis'));
@@ -132,7 +133,7 @@ test('admin editing persists validated data and updates publication status', asy
   assert.equal(published.whatsapp, 0);
   assert.equal((await put({ ...edited, status: 'pending' })).status, 200);
   assert.equal((await get()).professionals.length, 0);
-  assert.equal(db.prepare('SELECT status FROM professionals WHERE id=?').get(id).status, 'pending');
+  assert.equal((await db.find(id)).status, 'pending');
   assert.equal((await put(edited, headers, base + '/api/admin/professionals/0000')).status, 404);
 });
 test('admin editing rejects duplicates and oversized payloads', async t => {
@@ -145,4 +146,19 @@ test('admin editing rejects duplicates and oversized payloads', async t => {
   assert.equal((await put(id, JSON.stringify({ ...valid, status: 'pending' }))).status, 200);
   assert.equal((await put(id, '{bad')).status, 400);
   assert.equal((await put(id, JSON.stringify({ description: 'a'.repeat(11000) }))).status, 413);
+});
+
+test('Vercel parsed JSON bodies support registration and reject oversized input', async t => {
+  const { createHandler } = await import('../server.js');
+  const db = memoryStore();
+  const handler = createHandler(db);
+  async function invoke(body) {
+    const req = { method: 'POST', url: '/api/professionals', headers: { host: 'example.com', 'content-type': 'application/json' }, socket: { remoteAddress: '127.0.0.1' }, body };
+    const res = { setHeader() {}, writeHead(status) { this.status = status; }, end(body) { this.body = JSON.parse(body); } };
+    await handler(req, res);
+    return res;
+  }
+  assert.equal((await invoke(valid)).status, 201);
+  assert.equal((await invoke({ description: 'a'.repeat(11000) })).status, 413);
+  assert.equal((await invoke('{bad')).status, 400);
 });

@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check public/app.js && node --check public/admin.js && node --check manage.js && node --check public/phone.js",
-    "cadastros": "node manage.js list",
-    "aprovar": "node manage.js approve",
-    "remover": "node manage.js delete"
+    "check": "node --check server.js && node --check public/app.js && node --check public/admin.js && node --check manage.js && node --check public/phone.js && node --check store.js && node --check api/index.js",
+    "cadastros": "node --env-file-if-exists=.env manage.js list",
+    "aprovar": "node --env-file-if-exists=.env manage.js approve",
+    "remover": "node --env-file-if-exists=.env manage.js delete"
   }
 }

@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { createStore } from './store.js';
+import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
@@ -8,15 +8,15 @@ import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 const root = dirname(fileURLToPath(import.meta.url));
 export const categories = ['Pedreiro', 'Eletricista', 'Encanador', 'Pintor', 'Diarista', 'Jardineiro', 'Marceneiro', 'Técnico de ar-condicionado', 'Serralheiro', 'Carpinteiro', 'Gesseiro', 'Azulejista', 'Vidraceiro', 'Chaveiro', 'Montador de móveis', 'Técnico de eletrodomésticos', 'Técnico de informática', 'Instalador de câmeras', 'Dedetizador', 'Limpador de piscinas', 'Lavador de estofados', 'Mecânico', 'Borracheiro', 'Costureiro', 'Cabeleireiro', 'Barbeiro', 'Manicure e pedicure', 'Maquiador', 'Cozinheiro', 'Confeiteiro', 'Cuidador de idosos', 'Babá', 'Passeador de cães', 'Professor particular', 'Fotógrafo', 'Motorista', 'Fretes e mudanças', 'Outros'];
 export const normalize = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-export function openDatabase(path = process.env.DB_PATH || join(root, 'data', 'agenda.sqlite')) {
-  if (path !== ':memory:') mkdirSync(dirname(resolve(path)), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS professionals (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, neighborhood TEXT NOT NULL,
-    phone TEXT NOT NULL, description TEXT NOT NULL, whatsapp INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL
-  )`);
-  return db;
+async function readInput(req) {
+  let body = '';
+  if (req.body !== undefined) body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+  else for await (const chunk of req) {
+    body += chunk;
+    if (Buffer.byteLength(body) > 10000) throw Object.assign(Error('Cadastro muito grande.'), { status: 413 });
+  }
+  if (Buffer.byteLength(body) > 10000) throw Object.assign(Error('Cadastro muito grande.'), { status: 413 });
+  return JSON.parse(body);
 }
 function validate(input) {
   const clean = key => typeof input[key] === 'string' ? input[key].trim() : '';
@@ -36,12 +36,15 @@ function validate(input) {
   if (clean('website')) throw Error('Não foi possível enviar o cadastro.');
   return record;
 }
-export function createApp(db = openDatabase(), { adminPassword = process.env.ADMIN_PASSWORD || '' } = {}) {
+export function createHandler(store = createStore(), { adminPassword = process.env.ADMIN_PASSWORD || '' } = {}) {
   const attempts = new Map();
   const adminAttempts = new Map();
   const digest = value => createHash('sha256').update(value).digest();
   const assets = new Map([['/', ['index.html', 'text/html; charset=utf-8']], ['/app.js', ['app.js', 'text/javascript; charset=utf-8']], ['/phone.js', ['phone.js', 'text/javascript; charset=utf-8']], ['/style.css', ['style.css', 'text/css; charset=utf-8']]]);
-  return http.createServer(async (req, res) => {
+  assets.set('/favicon.svg', ['favicon.svg', 'image/svg+xml']);
+  assets.set('/favicon.ico', ['favicon.ico', 'image/x-icon']);
+  assets.set('/apple-touch-icon.png', ['apple-touch-icon.png', 'image/png']);
+  return async (req, res) => {
     const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(body)); };
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -63,34 +66,28 @@ export function createApp(db = openDatabase(), { adminPassword = process.env.ADM
         }
         if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return send(403, { error: 'Origem não permitida.' });
         if (req.method === 'GET' && url.pathname === '/api/admin/professionals') {
-          return send(200, { professionals: db.prepare('SELECT * FROM professionals ORDER BY created_at DESC').all() });
+          return send(200, { professionals: await store.list(true) });
         }
         const match = url.pathname.match(/^\/api\/admin\/professionals\/([a-f0-9-]+)(\/approve)?$/);
         if (match && !match[2] && req.method === 'PUT') {
           if (!req.headers['content-type']?.startsWith('application/json')) return send(415, { error: 'Envie os dados em JSON.' });
-          const chunks = []; let size = 0;
-          for await (const chunk of req) {
-            size += chunk.length;
-            if (size > 10000) return send(413, { error: 'Cadastro muito grande.' });
-            chunks.push(chunk);
-          }
           let record, status;
           try {
-            const input = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+            const input = await readInput(req);
             if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Dados inválidos.');
             status = input.status;
             if (!['pending', 'approved'].includes(status)) throw Error('Escolha um status válido.');
             record = validate({ ...input, category: 'Outros', customCategory: input.category, consent: true, website: '' });
-          } catch (error) { return send(400, { error: error instanceof SyntaxError ? 'Dados inválidos.' : error.message }); }
-          if (!db.prepare('SELECT id FROM professionals WHERE id=?').get(match[1])) return send(404, { error: 'Cadastro não encontrado.' });
-          if (db.prepare('SELECT id FROM professionals WHERE phone=? AND category=? AND id<>?').get(record.phone, record.category, match[1])) return send(409, { error: 'Já existe um cadastro deste telefone para esse serviço.' });
-          db.prepare('UPDATE professionals SET name=?,category=?,neighborhood=?,phone=?,description=?,whatsapp=?,status=? WHERE id=?').run(record.name, record.category, record.neighborhood, record.phone, record.description, record.whatsapp, status, match[1]);
+          } catch (error) { return send(error.status || 400, { error: error instanceof SyntaxError ? 'Dados inválidos.' : error.message }); }
+          if (!(await store.find(match[1]))) return send(404, { error: 'Cadastro não encontrado.' });
+          if (await store.duplicate(record.phone, record.category, match[1])) return send(409, { error: 'Já existe um cadastro deste telefone para esse serviço.' });
+          await store.update(match[1], { ...record, status });
           return send(200, { message: 'Cadastro atualizado.' });
         }
         if (match && ((req.method === 'POST' && match[2]) || (req.method === 'DELETE' && !match[2]))) {
           const result = match[2]
-            ? db.prepare("UPDATE professionals SET status='approved' WHERE id=?").run(match[1])
-            : db.prepare('DELETE FROM professionals WHERE id=?').run(match[1]);
+            ? await store.update(match[1], { status: 'approved' })
+            : await store.remove(match[1]);
           if (!result.changes) return send(404, { error: 'Cadastro não encontrado.' });
           return send(200, { message: match[2] ? 'Cadastro aprovado e publicado.' : 'Cadastro removido.' });
         }
@@ -102,12 +99,12 @@ export function createApp(db = openDatabase(), { adminPassword = process.env.ADM
         res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-store' });
         return res.end(readFileSync(join(root, 'public', name)));
       }
-      if (req.method === 'GET' && url.pathname === '/api/health') return send(200, { ok: db.prepare('SELECT 1 AS ok').get().ok === 1 });
+      if (req.method === 'GET' && url.pathname === '/api/health') return send(200, { ok: await store.health() });
       if (req.method === 'GET' && url.pathname === '/api/professionals') {
         const q = normalize((url.searchParams.get('q') || '').slice(0, 100));
         const neighborhood = normalize((url.searchParams.get('neighborhood') || '').slice(0, 80));
         const category = url.searchParams.get('category') || '';
-        const rows = db.prepare("SELECT id,name,category,neighborhood,phone,description,whatsapp FROM professionals WHERE status='approved' ORDER BY name").all();
+        const rows = await store.list(false);
         return send(200, { categories: [...new Set([...categories, ...rows.map(p => p.category)])], professionals: rows.filter(p => (!q || normalize(`${p.name} ${p.category} ${p.description} ${p.category === 'Pedreiro' ? 'construção obra reforma' : ''}`).includes(q)) && (!neighborhood || normalize(p.neighborhood).includes(neighborhood)) && (!category || p.category === category)) });
       }
       if (req.method === 'POST' && url.pathname === '/api/professionals') {
@@ -119,14 +116,12 @@ export function createApp(db = openDatabase(), { adminPassword = process.env.ADM
         const limit = attempts.get(ip) || { since: now, count: 0 };
         if (limit.count >= 20) return send(429, { error: 'Muitas tentativas. Tente novamente em uma hora.' });
         limit.count++; attempts.set(ip, limit);
-        let body = '';
-        for await (const chunk of req) { body += chunk; if (Buffer.byteLength(body) > 10000) return send(413, { error: 'Cadastro muito grande.' }); }
         let record;
-        try { record = validate(JSON.parse(body)); } catch (error) { return send(400, { error: error instanceof SyntaxError ? 'Dados inválidos.' : error.message }); }
-        const duplicate = db.prepare("SELECT id FROM professionals WHERE phone=? AND category=?").get(record.phone, record.category);
+        try { record = validate(await readInput(req)); } catch (error) { return send(error.status || 400, { error: error instanceof SyntaxError ? 'Dados inválidos.' : error.message }); }
+        const duplicate = await store.duplicate(record.phone, record.category);
         if (duplicate) return send(409, { error: 'Já existe um cadastro deste telefone para esse serviço.' });
         const id = randomUUID();
-        db.prepare('INSERT INTO professionals (id,name,category,neighborhood,phone,description,whatsapp,created_at) VALUES (?,?,?,?,?,?,?,?)').run(id, record.name, record.category, record.neighborhood, record.phone, record.description, record.whatsapp, new Date().toISOString());
+        await store.insert({ id, ...record, created_at: new Date().toISOString() });
         return send(201, { id, message: 'Cadastro recebido! Seus dados serão publicados após revisão.' });
       }
       const asset = assets.get(url.pathname);
@@ -134,12 +129,24 @@ export function createApp(db = openDatabase(), { adminPassword = process.env.ADM
         res.writeHead(200, { 'Content-Type': asset[1] }); return res.end(readFileSync(join(root, 'public', asset[0])));
       }
       return send(404, { error: 'Página não encontrada.' });
-    } catch (error) { console.error('Erro na requisição:', error.message); if (!res.headersSent) send(500, { error: 'Não foi possível concluir. Tente novamente.' }); else res.end(); }
-  });
+    } catch (error) { if (error.code === '23505') return send(409, { error: 'Já existe um cadastro deste telefone para esse serviço.' }); console.error('Erro na requisição:', error.message); if (!res.headersSent) send(500, { error: 'Não foi possível concluir. Tente novamente.' }); else res.end(); }
+  };
+}
+export function createApp(store, options) {
+  return http.createServer(createHandler(store, options));
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const app = createApp();
   app.listen(Number(process.env.PORT || 3000), process.env.HOST || '0.0.0.0', () => console.log('Agenda Porto Velho iniciada na porta', app.address().port));
 }
 
-export default createApp();
+// Initialize credentials only when the first request arrives.
+let handler;
+export default function handle(req, res) {
+  try { handler ||= createHandler(); } catch (error) {
+    console.error(error.message);
+    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({ error: 'Banco não configurado. Configure o Supabase na hospedagem.' }));
+  }
+  return handler(req, res);
+}

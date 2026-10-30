@@ -4,17 +4,18 @@ Lista telefônica online de serviços para Porto Velho–RO. Busca por serviço 
 
 ## Executar
 
-Requer Node.js 24 ou superior. Não há dependências externas, chaves de API ou serviços pagos.
+Requer Node.js 24 ou superior. Não há dependências npm externas. O banco é exclusivamente Supabase, tanto localmente quanto na Vercel.
 
 ```sh
-cd /workspace/agenda
 npm ci
 npm test
 npm run check
+cp .env.example .env
+# Preencha SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD no .env
 npm start
 ```
 
-A porta padrão é 3000. `PORT` e `HOST` são opcionais. `npm run dev` reinicia o servidor após alterações. O banco SQLite é criado automaticamente em `data/agenda.sqlite`; use `DB_PATH` para outro caminho. O Node pode emitir um aviso sobre a API SQLite experimental.
+A porta padrão é 3000. `PORT` e `HOST` são opcionais. `npm run dev` reinicia o servidor após alterações. Os comandos carregam automaticamente o arquivo `.env`, quando existir. Configure o Supabase antes de iniciar.
 
 ## Cadastros e moderação
 
@@ -40,15 +41,30 @@ Antes de aprovar, confirme com o titular a autorização, o telefone, o serviço
 
 ## Validação
 
-`npm test` cobre cadastro, privacidade de pendentes, aprovação, filtros, acentos, telefone, duplicidade, validação, origem, tamanho e limite de requisições. Os testes usam bancos em memória, sem alterar os cadastros reais. `npm run check` verifica a sintaxe do servidor e do JavaScript do navegador.
+`npm test` cobre cadastro, privacidade de pendentes, aprovação, filtros, acentos, telefone, duplicidade, validação, origem, tamanho e limite de requisições. Os testes usam dados simulados em memória e respostas HTTP simuladas do Supabase, sem alterar os cadastros reais. `npm run check` verifica a sintaxe do servidor e do JavaScript do navegador.
 
-## Publicação
+## Publicação na Vercel com Supabase
 
-Execute como processo Node persistente, com armazenamento durável para `data/`. Faça backups consistentes do SQLite (incluindo o estado WAL, ou usando a API de backup SQLite). Use HTTPS no proxy de produção. O limitador usa o endereço direto da conexão; atrás de um proxy ele pode agrupar visitantes no mesmo limite. Uma implantação pública com maior tráfego precisa de limite no proxy e processo de moderação operacional.
+1. Crie um projeto no Supabase e execute o conteúdo de `supabase/schema.sql` no **SQL Editor** do próprio painel Supabase. Essa ferramenta cria a tabela uma única vez; não é um banco separado nem precisa ficar aberta para o site funcionar.
+2. Copie a URL do projeto e uma chave **secret** (`sb_secret_...`) em **Settings → API Keys**. Uma chave legada `service_role` também é aceita. Não use a chave `anon` ou `publishable`.
+3. No projeto da Vercel, em **Settings → Environment Variables**, configure:
+   - `SUPABASE_URL`: URL do projeto, como `https://seu-projeto.supabase.co`.
+   - `SUPABASE_SECRET_KEY`: chave secreta do Supabase. Para chave legada, use `SUPABASE_SERVICE_ROLE_KEY`.
+   - `ADMIN_PASSWORD`: sua senha forte de administração.
+4. Aplique as variáveis ao ambiente **Production** e, se for usar, **Preview**. Publique este código no Git e faça um novo deploy. O `vercel.json` configura a função Node e as rotas; use Node.js 24.x, sem sobrescrever o diretório de saída e o comando de build no painel.
+5. Confira `/api/health` (deve responder `{"ok":true}`), envie um cadastro e aprove em `/admin`. Confira se ele aparece na busca após aprovação.
+
+As chaves ficam apenas no servidor. O SQL ativa RLS e retira o acesso direto dos papéis públicos: consulta, cadastro e moderação passam pela API do projeto. Não coloque a chave em arquivos de `public/`, no Git ou em variáveis com prefixo público.
+
+Criar a tabela não transfere cadastros do SQLite automaticamente. Se já houver dados em `data/agenda.sqlite`, preserve uma cópia antes da troca; eles precisam ser importados separadamente. Sem as variáveis, o servidor não inicia localmente e responde com erro de configuração na Vercel.
+
+Para executar localmente, copie `.env.example` para `.env` e preencha os valores. Use `npm start`, `npm run cadastros`, `npm run aprovar -- ID` ou `npm run remover -- ID`. Todos usam o mesmo projeto Supabase configurado no ambiente.
+
+Os limites de tentativas ficam em memória por instância, e não são globais na Vercel. Configure regras de limitação no proxy para uma implantação com maior tráfego.
+
+Referências: [chaves de API Supabase](https://supabase.com/docs/guides/getting-started/api-keys) e [funções Node na Vercel](https://vercel.com/docs/functions/runtimes/node-js).
 
 Antes de divulgar o site, configure seu domínio, o responsável pelo tratamento dos dados, um canal real para pedidos de exclusão e uma política de privacidade adequada à operação. Não há pagamentos, contas de usuários, cálculo de distância por GPS ou verificação automática de profissionais nesta versão. A proximidade é por bairro informado, sem promessa de distância exata.
-
-O banco deve ficar em volume persistente: a publicação do ambiente de desenvolvimento não substitui hospedagem pública nem garante preservação dos futuros cadastros.
 
 ## Bairros
 
@@ -56,4 +72,4 @@ As sugestões de bairro na busca e no cadastro incluem os 71 nomes do [Compêndi
 
 ## Edição pelo administrador
 
-Em `/admin`, escolha **Visualização → Tabela do banco** para consultar os cadastros em linhas. Use a busca e o filtro de status para localizar registros. **Editar** permite alterar nome, profissão, bairro, telefone, descrição, WhatsApp e status; **Salvar alterações** grava no SQLite. Alterações em cadastros publicados aparecem imediatamente no site. **Remover** exclui o registro após confirmação. O ID e a data original do cadastro são preservados na edição.
+Em `/admin`, escolha **Visualização → Tabela do banco** para consultar os cadastros em linhas. Use a busca e o filtro de status para localizar registros. **Editar** permite alterar nome, profissão, bairro, telefone, descrição, WhatsApp e status; **Salvar alterações** grava no Supabase. Alterações em cadastros publicados aparecem imediatamente no site. **Remover** exclui o registro após confirmação. O ID e a data original do cadastro são preservados na edição.
