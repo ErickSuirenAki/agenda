@@ -1,75 +1,114 @@
-# Agenda PVH
+# 📍 Agenda Porto Velho
 
-Lista telefônica online de serviços para Porto Velho–RO. Busca por serviço (incluindo “construção” para pedreiros), nome, descrição e bairro. Interface responsiva em português, telefone e WhatsApp, cadastro com consentimento e revisão antes da publicação.
+### Quem resolve está por perto.
 
-## Executar
+O **Agenda Porto Velho** é uma plataforma digital desenvolvida com o objetivo de conectar moradores de Porto Velho, Rondônia, a profissionais e prestadores de serviços da própria cidade, tornando mais simples, rápido e acessível encontrar alguém para realizar serviços do cotidiano.
 
-Requer Node.js 24 ou superior. Não há dependências npm externas. O banco é exclusivamente Supabase, tanto localmente quanto na Vercel.
+A proposta é reunir, em um único ambiente, contatos de profissionais de diferentes áreas, permitindo que a população encontre serviços de acordo com a necessidade, a categoria profissional e o bairro.
 
-```sh
-npm ci
-npm test
-npm run check
-cp .env.example .env
-# Preencha SUPABASE_URL, SUPABASE_SECRET_KEY e ADMIN_PASSWORD no .env
-npm start
-```
+🌐 **Acesse a plataforma:** https://agenda-portovelho.vercel.app/
 
-A porta padrão é 3000. `PORT` e `HOST` são opcionais. `npm run dev` reinicia o servidor após alterações. Os comandos carregam automaticamente o arquivo `.env`, quando existir. Configure o Supabase antes de iniciar.
+## 💡 Sobre o projeto
 
-## Cadastros e moderação
+Encontrar um profissional de confiança para realizar um serviço nem sempre é uma tarefa simples. Muitas vezes, a busca depende de indicações de conhecidos, grupos de mensagens ou publicações dispersas nas redes sociais.
 
-A base começa vazia: não são exibidos profissionais ou telefones fictícios. Um cadastro enviado pelo site fica pendente e não aparece na API pública até aprovação. A administração pelo navegador fica em `/admin`. Configure uma senha forte ao iniciar o servidor:
+Ao mesmo tempo, diversos trabalhadores autônomos possuem dificuldade para divulgar seus serviços e alcançar novos clientes, especialmente quando não possuem páginas próprias ou recursos para investir em publicidade.
 
-```sh
-ADMIN_PASSWORD='sua-senha-forte' npm start
-```
+O **Agenda Porto Velho** surgiu como uma iniciativa para aproximar essas duas realidades: pessoas que precisam de um serviço e profissionais que desejam oferecer seu trabalho.
 
-Abra `http://localhost:3000/admin` (ou `/admin` no seu domínio), informe a senha e use os filtros **Pendentes**, **Publicados** e **Todos**. Cada cadastro mostra seus dados e permite aprovar ou remover, com confirmação. A aprovação publica imediatamente na busca; a remoção exclui do banco.
+A plataforma busca contribuir para a valorização dos trabalhadores locais, ampliar a visibilidade de pequenos prestadores de serviços e incentivar a economia da cidade por meio da tecnologia.
 
-A senha é configurada em `ADMIN_PASSWORD` no ambiente da hospedagem. Sem essa variável, a API administrativa fica desativada. Não há senha padrão. A senha digitada fica somente na memória da página; sair ou recarregar exige novo acesso. Use HTTPS em produção. Após dez falhas de autenticação por IP, o acesso fica bloqueado até completar 15 minutos da primeira falha; atrás de proxy esse limite pode ser compartilhado.
+## 🎯 Objetivos
 
-Também é possível administrar pelo terminal:
+**Objetivo geral**
 
-```sh
-npm run cadastros
-npm run aprovar -- ID_DO_CADASTRO
-npm run remover -- ID_DO_CADASTRO
-```
+Facilitar a conexão entre moradores e prestadores de serviços de Porto Velho por meio de uma plataforma digital gratuita, acessível e de fácil utilização.
 
-Antes de aprovar, confirme com o titular a autorização, o telefone, o serviço e a região atendida. A listagem administrativa inclui telefones: trate a saída como dados pessoais. O comando de remoção também atende solicitações de exclusão. A aprovação é uma revisão do cadastro, não uma certificação da qualidade do serviço.
+**Objetivos específicos**
 
-## Validação
+- Centralizar informações de contato de profissionais de diferentes áreas.
+- Facilitar a localização de prestadores de serviços por profissão e bairro.
+- Ampliar a visibilidade de trabalhadores autônomos e pequenos prestadores de serviços.
+- Simplificar o contato entre clientes e profissionais.
+- Valorizar os serviços oferecidos pela comunidade local.
+- Desenvolver uma solução tecnológica voltada a necessidades reais da população.
 
-`npm test` cobre cadastro, privacidade de pendentes, aprovação, filtros, acentos, telefone, duplicidade, validação, origem, tamanho e limite de requisições. Os testes usam dados simulados em memória e respostas HTTP simuladas do Supabase, sem alterar os cadastros reais. `npm run check` verifica a sintaxe do servidor e do JavaScript do navegador.
+## ⚙️ Funcionalidades
 
-## Publicação na Vercel com Supabase
+### 🔎 Busca por profissionais
 
-1. Crie um projeto no Supabase e execute o conteúdo de `supabase/schema.sql` no **SQL Editor** do próprio painel Supabase. Essa ferramenta cria a tabela uma única vez; não é um banco separado nem precisa ficar aberta para o site funcionar.
-2. Copie a URL do projeto e uma chave **secret** (`sb_secret_...`) em **Settings → API Keys**. Uma chave legada `service_role` também é aceita. Não use a chave `anon` ou `publishable`.
-3. No projeto da Vercel, em **Settings → Environment Variables**, configure:
-   - `SUPABASE_URL`: URL do projeto, como `https://seu-projeto.supabase.co`.
-   - `SUPABASE_SECRET_KEY`: chave secreta do Supabase. Para chave legada, use `SUPABASE_SERVICE_ROLE_KEY`.
-   - `ADMIN_PASSWORD`: sua senha forte de administração.
-4. Aplique as variáveis ao ambiente **Production** e, se for usar, **Preview**. Publique este código no Git e faça um novo deploy. O `vercel.json` configura a função Node e as rotas; use Node.js 24.x, sem sobrescrever o diretório de saída e o comando de build no painel.
-5. Confira `/api/health` (deve responder `{"ok":true}`), envie um cadastro e aprove em `/admin`. Confira se ele aparece na busca após aprovação.
+Os usuários podem pesquisar profissionais cadastrados por nome, serviço, categoria ou bairro, facilitando a identificação de prestadores que atendam às suas necessidades.
 
-As chaves ficam apenas no servidor. O SQL ativa RLS e retira o acesso direto dos papéis públicos: consulta, cadastro e moderação passam pela API do projeto. Não coloque a chave em arquivos de `public/`, no Git ou em variáveis com prefixo público.
+### 🛠️ Diversidade de serviços
 
-Criar a tabela não transfere cadastros do SQLite automaticamente. Se já houver dados em `data/agenda.sqlite`, preserve uma cópia antes da troca; eles precisam ser importados separadamente. Sem as variáveis, o servidor não inicia localmente e responde com erro de configuração na Vercel.
+A plataforma contempla diferentes categorias profissionais, como pedreiros, eletricistas, encanadores, diaristas, jardineiros, técnicos de informática, cabeleireiros, mecânicos e muitos outros.
 
-Para executar localmente, copie `.env.example` para `.env` e preencha os valores. Use `npm start`, `npm run cadastros`, `npm run aprovar -- ID` ou `npm run remover -- ID`. Todos usam o mesmo projeto Supabase configurado no ambiente.
+Também é possível informar profissões que não estejam nas categorias previamente disponíveis.
 
-Os limites de tentativas ficam em memória por instância, e não são globais na Vercel. Configure regras de limitação no proxy para uma implantação com maior tráfego.
+### 📱 Contato facilitado
 
-Referências: [chaves de API Supabase](https://supabase.com/docs/guides/getting-started/api-keys) e [funções Node na Vercel](https://vercel.com/docs/functions/runtimes/node-js).
+Os profissionais podem disponibilizar seus números de telefone e indicar a disponibilidade de contato pelo WhatsApp, permitindo a comunicação direta com potenciais clientes.
 
-Antes de divulgar o site, configure seu domínio, o responsável pelo tratamento dos dados, um canal real para pedidos de exclusão e uma política de privacidade adequada à operação. Não há pagamentos, contas de usuários, cálculo de distância por GPS ou verificação automática de profissionais nesta versão. A proximidade é por bairro informado, sem promessa de distância exata.
+### 📝 Cadastro de profissionais
 
-## Bairros
+Prestadores de serviços podem solicitar sua inclusão na plataforma, informando nome, profissão, bairro, telefone e uma descrição das atividades realizadas.
 
-As sugestões de bairro na busca e no cadastro incluem os 71 nomes do [Compêndio dos Bairros do Distrito Sede, do Geoportal da Prefeitura](https://geoportal.portovelho.ro.gov.br/compendios_bairros.html), consultado em 29/10/2026. Foi corrigida a grafia de Tancredo Neves na lista. Os campos continuam permitindo digitação livre para localidades não listadas.
+### 🔐 Administração e moderação
 
-## Edição pelo administrador
+O sistema possui um painel administrativo para análise, aprovação, edição e remoção de cadastros.
 
-Em `/admin`, escolha **Visualização → Tabela do banco** para consultar os cadastros em linhas. Use a busca e o filtro de status para localizar registros. **Editar** permite alterar nome, profissão, bairro, telefone, descrição, WhatsApp e status; **Salvar alterações** grava no Supabase. Alterações em cadastros publicados aparecem imediatamente no site. **Remover** exclui o registro após confirmação. O ID e a data original do cadastro são preservados na edição.
+As informações enviadas pelos profissionais passam por uma etapa de revisão antes de serem disponibilizadas publicamente.
+
+## 🌎 Impacto social
+
+Mais do que uma lista de contatos, o Agenda Porto Velho busca demonstrar como a tecnologia pode ser utilizada para enfrentar desafios cotidianos e gerar oportunidades dentro da própria comunidade.
+
+A iniciativa pretende contribuir para:
+
+- **Inclusão digital:** oferecer aos profissionais um espaço simples para divulgar seus serviços.
+- **Economia local:** estimular a contratação de trabalhadores da cidade.
+- **Acessibilidade:** facilitar a busca por serviços em uma plataforma intuitiva e responsiva.
+- **Visibilidade profissional:** ampliar as oportunidades de divulgação de trabalhadores autônomos.
+- **Inovação social:** aplicar conhecimentos de desenvolvimento de software na resolução de problemas da comunidade.
+
+## 💻 Tecnologias utilizadas
+
+O projeto foi desenvolvido utilizando tecnologias web, com foco em simplicidade, acessibilidade e facilidade de manutenção.
+
+| Tecnologia | Utilização |
+|---|---|
+| HTML5 | Estrutura das páginas |
+| CSS3 | Estilização e responsividade |
+| JavaScript | Interatividade e funcionalidades |
+| Node.js | Servidor e API |
+| Supabase (PostgreSQL) | Armazenamento dos cadastros |
+| Vercel | Hospedagem e publicação |
+| Git e GitHub | Versionamento do código-fonte |
+
+## 🔒 Privacidade e responsabilidade
+
+O cadastro exige a autorização do profissional para a publicação de seus dados de contato.
+
+As informações são submetidas à moderação antes de serem disponibilizadas ao público.
+
+O Agenda Porto Velho atua como um meio de divulgação e aproximação entre profissionais e potenciais clientes, não realizando diretamente os serviços anunciados nem certificando automaticamente a qualidade dos prestadores cadastrados.
+
+## 🚀 Perspectivas futuras
+
+O projeto poderá ser ampliado com novas funcionalidades, como melhorias nos mecanismos de busca, recursos adicionais para os profissionais e aperfeiçoamentos na experiência dos usuários.
+
+A proposta é evoluir continuamente, considerando as necessidades da população e as possibilidades de utilização da tecnologia em benefício da comunidade.
+
+## 👨‍💻 Desenvolvimento
+
+Projeto independente de desenvolvimento de software, voltado à criação de uma solução digital para a comunidade de Porto Velho, Rondônia.
+
+**Desenvolvedor:** Erick Batista dos Santos
+
+**GitHub:** https://github.com/ErickSuirenAki
+
+---
+
+**Agenda Porto Velho — Quem resolve está por perto.**
+
+*Tecnologia para conectar pessoas, valorizar profissionais e fortalecer a comunidade local.*
