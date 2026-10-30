@@ -1,4 +1,3 @@
-// All database access stays on the server; the browser never receives credentials.
 export function supabaseStore({ url, key, fetchImpl = fetch }) {
   const base = new URL('/rest/v1/professionals', url);
   if (base.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(base.hostname)) throw Error('SUPABASE_URL deve usar HTTPS.');
@@ -6,7 +5,6 @@ export function supabaseStore({ url, key, fetchImpl = fetch }) {
     const endpoint = new URL(base);
     endpoint.search = new URLSearchParams(params).toString();
     const headers = { apikey: key, 'Content-Type': 'application/json', Prefer: 'return=representation' };
-    // Legacy service_role keys are JWTs; new sb_secret keys go only in apikey.
     if (!key.startsWith('sb_secret_')) headers.Authorization = `Bearer ${key}`;
     const response = await fetchImpl(endpoint, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000) });
     if (!response.ok) {
@@ -20,7 +18,6 @@ export function supabaseStore({ url, key, fetchImpl = fetch }) {
   return {
     async list(admin) {
       const params = admin ? { select: '*', order: 'created_at.desc,id.asc' } : { select: 'id,name,category,neighborhood,phone,description,whatsapp', status: 'eq.approved', order: 'name.asc,id.asc' };
-      // Supabase caps each response; paginate so records never silently disappear.
       const rows = [];
       for (let offset = 0; ; offset += 500) {
         const page = await request('GET', { ...params, limit: '500', offset: String(offset) });

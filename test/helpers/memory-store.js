@@ -1,4 +1,3 @@
-// Test double only: production always uses Supabase.
 export function memoryStore() {
   const rows = new Map();
   return {

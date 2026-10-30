@@ -1,4 +1,3 @@
--- Execute uma vez no SQL Editor do projeto Supabase.
 create table if not exists public.professionals (
   id text primary key,
   name text not null,
@@ -13,6 +12,5 @@ create table if not exists public.professionals (
 );
 create index if not exists professionals_status_name_idx on public.professionals (status, name);
 alter table public.professionals enable row level security;
--- O acesso passa exclusivamente pelo servidor usando a chave secreta.
 revoke all on public.professionals from anon, authenticated;
 grant select, insert, update, delete on public.professionals to service_role;
